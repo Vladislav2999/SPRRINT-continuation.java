@@ -3,6 +3,7 @@ package com.yandex.practicum.manager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 import com.yandex.practicum.pattern.Epic;
@@ -12,9 +13,10 @@ import com.yandex.practicum.pattern.Task;
 
 public class InMemoryTaskManager implements TaskManager {
     private Integer id = 0;
-    private final HashMap<Integer, Task> tasks = new HashMap<>();
-    private final HashMap<Integer, Subtask> subtasks = new HashMap<>();
-    private final HashMap<Integer, Epic> epics = new HashMap<>();
+
+    private final Map<Integer, Task> tasks = new HashMap<>();
+    private final Map<Integer, Subtask> subtasks = new HashMap<>();
+    private final Map<Integer, Epic> epics = new HashMap<>();
     private final HistoryManager managerHistory = Managers.getDefaultHistory();
 
     @Override
@@ -25,7 +27,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public ArrayList<Task> getTaskAll() {
+    public List<Task> getTaskAll() {
         return new ArrayList<>(tasks.values());
     }
 
@@ -51,6 +53,9 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void deleteTaskAll() {
+        for (var key : tasks.keySet()) {
+            managerHistory.remove(key);
+        }
         tasks.clear();
     }
 
@@ -58,6 +63,7 @@ public class InMemoryTaskManager implements TaskManager {
     public boolean deleteTaskById(Integer id) {
         if (tasks.containsKey(id)) {
             tasks.remove(id);
+            managerHistory.remove(id);
             return true;
         } else {
             return false;
@@ -76,7 +82,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public ArrayList<Subtask> getSubtaskAll() {
+    public List<Subtask> getSubtaskAll() {
         return new ArrayList<>(subtasks.values());
     }
 
@@ -103,24 +109,23 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void deleteSubtaskAll() {
-        subtasks.clear();
-        for (Epic epic : epics.values()) {
-            epic.setStatus(Status.NEW);
-            epic.getIdSubtask().clear();
+        for (var key : subtasks.keySet()) {
+            managerHistory.remove(key);
+            subtasks.clear();
         }
     }
+
 
     @Override
     public boolean deleteSubtaskId(Integer id) {
         if (subtasks.containsKey(id)) {
-            Epic epic = epics.get(subtasks.get(id).getEpicId());
-            epic.getIdSubtask().remove(id);
             subtasks.remove(id);
-            checkStatusEpic(epic);
+            managerHistory.remove(id);
             return true;
         } else {
             return false;
         }
+
     }
 
     @Override
@@ -137,10 +142,9 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public ArrayList<Epic> getEpicAll() {
+    public List<Epic> getEpicAll() {
         return new ArrayList<>(epics.values());
     }
-
 
 
     @Override
@@ -168,26 +172,27 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void deleteEpicAll() {
-        subtasks.clear();
-        epics.clear();
+        for (var key : subtasks.keySet()) {
+            managerHistory.remove(key);
+            subtasks.clear();
+        }
     }
 
     @Override
     public boolean deleteEpicById(Integer id) {
         if (epics.containsKey(id)) {
-            for (Integer integer : epics.get(id).getIdSubtask()) {
-                subtasks.remove(integer);
-            }
+            epics.remove(id);
             epics.remove(id);
             return true;
         } else {
             return false;
         }
+
     }
 
     @Override
-    public ArrayList<Subtask> getSubtaskInEpicAll(Epic epic) {
-        ArrayList<Subtask> temp = new ArrayList<>();
+    public List<Subtask> getSubtaskInEpicAll(Epic epic) {
+        List<Subtask> temp = new ArrayList<>();
         for (int i = 0; i < epic.getIdSubtask().size(); i++) {
             if (subtasks.get(epic.getIdSubtaskValue(i)) == null) {
                 continue;
@@ -197,8 +202,12 @@ public class InMemoryTaskManager implements TaskManager {
         return temp;
     }
 
+    @Override
+    public List<Task> getHistory() {
+        return managerHistory.getHistory();
+    }
 
-   private Integer createId() {
+    private Integer createId() {
         id += 1;
         return id;
     }
@@ -227,9 +236,6 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    @Override
-    public List<Task> getHistory() {
-        return managerHistory.getHistory();
-    }
+
 }
 

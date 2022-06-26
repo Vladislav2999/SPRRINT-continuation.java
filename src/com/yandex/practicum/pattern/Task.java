@@ -71,7 +71,7 @@ public class Task {
         if (obj == null || getClass() != obj.getClass()) return false;
         if (!super.equals(obj)) return false;
         Task task = (Task) obj;
-        return id == task.id && name.equals(task.name) && description.equals(task.description) && status == task.status;
+        return id.equals(task.id) && name.equals(task.name) && description.equals(task.description) && status == task.status;
     }
 
 
